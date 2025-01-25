@@ -1,90 +1,135 @@
-# PushBased
+# Micro Table
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A extremely lightweight TypeScript table rendering for the terminal.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+**Features:**
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- [x] Extremely lightweight
+- [x] No dependencies
+- [x] Custom border style
+- [x] Format hooks for rows
 
-## Finish your CI setup
+## Benchmarks
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/9ybGXqDG1n)
+<details>
+<summary><code>table.js</code></summary>
 
+```typescript
+import {Console} from 'node:console';
+import {PassThrough} from 'node:stream';
 
-## Generate a library
+const ts = new PassThrough();
+const logger = () => {
+    return new Console({stdout: ts}).table(data);
+}
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+export function table(data: any, opt): string {
+    const rowFormats = opt?.rowFormats ?? [];
+    return String(logger.table(data) ?? ts.read())
+        .split(`\n`)
+        .flatMap((line, _, rows) =>
+            rowFormats
+                .reduce((acc, fn) => acc.flatMap(row => {
+                        const formatted = fn(row, acc.indexOf(row), rows);
+                        return Array.isArray(formatted) ? formatted : [formatted];
+                    }), [line])
+        )
+        .join(`\n`);
+}
 ```
 
-## Run tasks
+</details>
 
-To build the library use:
+| **File Name**         | **CJS** | **ESM** |
+|-----------------------|---------|---------|
+| `alignment.format.js` | 1.0 KB  | 1.10 KB |
+| `border.format.js`    | 0.9 KB  | 0.95 KB |
+| `table.js`            | 2.37 KB | 2.33 KB |
 
-```sh
-npx nx build pkg1
+## Installation
+
+```sh   
+npm install @push-based/micro-table
 ```
 
-To run any task with Nx use:
+### Usage
 
-```sh
-npx nx <target> <project-name>
+```ts
+import {table} from '@push-based/micro-table';
+
+const strigTable = table([
+    {
+        name: 'Alice',
+        age: 25,
+    },
+    {
+        name: 'Bob',
+        age: 30,
+    }
+]);
+
+// Output:
+// ┌───────┬─────┐
+// │ Name  │ Age │
+// ├───────┼─────┤
+// │ Alice │  25 │
+// │ Bob   │  30 │
+// └───────┴─────┘
+console.log(strigTable);
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+#### Border Style
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+By default, the table has a border style of `single`.
 
-## Versioning and releasing
+You can change the border style by using the `borderStyle` helper with one of the following styles:
 
-To version and release the library use
+- `single`
+- `double`
+- `round`
+- `zigzag`
 
-```
-npx nx release
-```
+```ts
+import {table, borderStyle} from '@push-based/micro-table';
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+const strigTable = table(data, {
+    rowFormats: [
+        borderStyle('double')
+    ]
+});
 
-[Learn more about Nx release &raquo;](hhttps://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
-
-```sh
-npx nx sync
-```
-
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
-
-```sh
-npx nx sync:check
+// Output:
+// ╔═══════╦═════╗
+// ║ Name  ║ Age ║
+// ╠═══════╬═════╣
+// ║ Alice ║ 30  ║
+// ║ Bob   ║ 25  ║
+// ╚═══════╩═════╝
+console.log(strigTable);
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+##### Custom Border Style
 
+You can also create a custom border style by using the `borderStyle` helper with a custom character set.
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```ts
+import {table, borderStyle} from '@push-based/micro-table';
 
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+const strigTable = table(data, {
+    rowFormats: [
+        borderStyle({
+            '┌': '┏',
+            '┐': '┓',
+            '└': '┗',
+            '┘': '┛',
+            '─': '━',
+            '│': '┃',
+            '┼': '╋',
+            '├': '┣',
+            '┤': '┫',
+            '┬': '┳',
+            '┴': '┻',
+        })
+    ]
+});
+```
