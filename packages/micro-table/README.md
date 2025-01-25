@@ -133,12 +133,3 @@ const strigTable = table(data, {
     ]
 });
 ```
-
-```shell
-project-root/
-├── eslint.config.js
-└── packages/
-    ├── frontend/
-    └── node-backend/
-```
-
